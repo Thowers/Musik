@@ -4,5 +4,5 @@ from . import views
 app_name = 'musik'
 
 urlpatterns = [
-    path('buscador/', views.buscador, name='buscador'),
+    path('', views.buscador, name='buscador'),
 ]
