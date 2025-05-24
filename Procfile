@@ -1,1 +1,1 @@
-web: python manage.py migrate && gunicorn musik.wsgi 
+web: gunicorn <tu_proyecto>.wsgi:application --log-file -
