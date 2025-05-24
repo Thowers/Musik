@@ -1,0 +1,14 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Busqueda{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Buscador de Artistas o Canciones</h2>
+    <form method="get">
+      <input type="text" name="q" class="form-control" placeholder="Busca un artista o canción...">
+      <button type="submit" class="btn btn-primary mt-2">Buscar</button>
+    </form>
+  </div>
+{% endblock %}
