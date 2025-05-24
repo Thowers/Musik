@@ -1,1 +1,1 @@
-web: gunicorn <tu_proyecto>.wsgi:application --log-file -
+web: python manage.py migrate && python manage.py collectstatic --noinput && gunicorn musik.wsgi:application --bind 0.0.0.0:$PORT
