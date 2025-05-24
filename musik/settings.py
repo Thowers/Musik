@@ -26,7 +26,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "cualquier_clave_de_prueba")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG      = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [".railway.app", "localhost", "127.0.0.1"]
 
 
 # Application definition
