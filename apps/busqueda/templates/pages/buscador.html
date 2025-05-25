@@ -1,14 +1,118 @@
 {% extends "layouts/base.html" %}
 {% load static %}
 
-{% block title %}Busqueda{% endblock %}
+{% block title %}Búsqueda{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    <h2>Buscador de Artistas o Canciones</h2>
-    <form method="get">
-      <input type="text" name="q" class="form-control" placeholder="Busca un artista o canción...">
-      <button type="submit" class="btn btn-primary mt-2">Buscar</button>
-    </form>
+  <h2>Buscador de Artistas o Canciones</h2>
+  <form method="post" class="d-flex mb-4">
+    {% csrf_token %}
+    <input class="form-control me-2" type="text" name="artista" placeholder="Buscar artista">
+    <button class="btn btn-primary" type="submit">Buscar</button>
+  </form>
+
+  {% if artista %}
+  <div class="d-flex gap-4">
+    <!-- Columna izquierda: Artista -->
+    <div class="flex-shrink-0" style="width: 280px;">
+      <h3>{{ artista.name }}</h3>
+      {% if artista.images %}
+      <img src="{{ artista.images.0.url }}" alt="Imagen del artista" class="img-fluid rounded mb-3">
+      {% endif %}
+      <p><strong>Popularidad:</strong> {{ artista.popularity }}</p>
+      <p><strong>Géneros:</strong> {{ artista.genres|join:", " }}</p>
+    </div>
+
+    <!-- Columna derecha: Álbumes -->
+    <div class="flex-grow-1">
+      <h4>Álbumes</h4>
+      <div class="d-flex flex-column gap-3">
+        {% for album in albums %}
+        <div class="card">
+          <div class="card-body p-2 d-flex align-items-center" style="cursor: pointer;"
+            onclick="mostrarCanciones('{{ album.id }}')">
+            {% if album.images %}
+            <img src="{{ album.images.0.url }}" alt="Portada álbum" class="me-3 rounded"
+              style="width: 60px; height: 60px; object-fit: cover;">
+            {% endif %}
+            <span class="fw-bold">{{ album.name }}</span>
+          </div>
+          <div id="canciones-{{ album.id }}" class="px-3 pb-2" style="display: none;">
+            {% for track in album.tracks %}
+            <div class="d-flex align-items-center justify-content-between py-1">
+              <span style="cursor:pointer; color:#198754; text-decoration:underline;" onclick="abrirModal('{{ track.name }}', '{{ artista.name }}', '{{ track.external_urls.spotify }}')">{{ track.name }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
   </div>
+
+  <!-- Contenedor para el embed de Spotify -->
+  <div id="embed-container" class="mt-4"></div>
+
+  {% endif %}
+</div>
+<!-- Modal Bootstrap -->
+<div class="modal fade" id="modalReproductor" tabindex="-1" aria-labelledby="modalReproductorLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalReproductorLabel">Reproductor</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div id="modal-embed"></div>
+        <hr>
+        <div id="modal-lyrics" style="white-space: pre-line;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function mostrarCanciones(albumId) {
+      document.querySelectorAll('[id^="canciones-"]').forEach(div => {
+        div.style.display = 'none';
+      });
+      const divSel = document.getElementById('canciones-' + albumId);
+      if (divSel) divSel.style.display = 'block';
+    }
+
+    function reproducirEmbed(spotifyUrl) {
+      const trackId = spotifyUrl.split('/track/')[1];
+      if (!trackId) return;
+      const embedHtml = `
+        <iframe src="https://open.spotify.com/embed/track/${trackId}"
+                width="100%" height="80" frameborder="0"
+                allow="encrypted-media"></iframe>`;
+      document.getElementById('embed-container').innerHTML = embedHtml;
+    }
+
+function abrirModal(trackName, artistName, spotifyUrl) {
+  const trackId = spotifyUrl.split('/track/')[1];
+  if (!trackId) return;
+  const embedHtml = `<iframe src='https://open.spotify.com/embed/track/${trackId}' width='100%' height='80' frameborder='0' allow='encrypted-media'></iframe>`;
+  document.getElementById('modal-embed').innerHTML = embedHtml;
+  document.getElementById('modal-lyrics').innerText = 'Buscando letra...';
+  fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artistName)}/${encodeURIComponent(trackName)}`)
+    .then(resp => resp.json())
+    .then(data => {
+      let lyrics = data.lyrics || 'Letra no encontrada.';
+      // Elimina espacios extra y líneas vacías
+      lyrics = lyrics.replace(/ +/g, ' ').replace(/\n{2,}/g, '\n');
+      document.getElementById('modal-lyrics').innerText = lyrics;
+    })
+    .catch(() => {
+      document.getElementById('modal-lyrics').innerText = 'Letra no encontrada.';
+    });
+  var modal = new bootstrap.Modal(document.getElementById('modalReproductor'));
+  modal.show();
+}
+</script>
 {% endblock %}
+
+
